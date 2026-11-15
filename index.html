@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>维持生命的营养素 · 交互学习实验室</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<style>
+:root{
+  --bg:#F8FAFC; --card:#FFFFFF; --text:#1F2937; --muted:#6B7280;
+  --border:#E5E7EB; --accent:#3AAFA9; --accent-light:#E6F7F6;
+  --warn:#F59E0B; --danger:#EF4444; --success:#10B981;
+  --purple:#8B5CF6; --blue:#3B82F6;
+  --radius:14px; --shadow:0 2px 8px rgba(0,0,0,0.06);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+/* ── Header ── */
+header{background:linear-gradient(135deg,#3AAFA9 0%,#2B7A78 100%);color:#fff;padding:32px 24px;text-align:center}
+header h1{font-size:26px;font-weight:700;margin-bottom:6px}
+header p{font-size:14px;opacity:0.9}
+/* ── Nav ── */
+nav{background:var(--card);border-bottom:1px solid var(--border);padding:0 16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+nav ul{list-style:none;display:flex;gap:4px;overflow-x:auto;max-width:1200px;margin:0 auto}
+nav li{white-space:nowrap}
+nav a{display:flex;align-items:center;gap:6px;padding:14px 16px;text-decoration:none;color:var(--muted);font-size:14px;font-weight:500;border-bottom:3px solid transparent;transition:all 0.2s}
+nav a:hover{color:var(--accent)}
+nav a.active{color:var(--accent);border-bottom-color:var(--accent)}
+nav a .icon{font-size:18px}
+/* ── Main ── */
+main{max-width:1200px;margin:0 auto;padding:24px 16px}
+.module{display:none;animation:fadeIn 0.4s ease}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+/* ── Card ── */
+.card{background:var(--card);border-radius:var(--radius);padding:24px;margin-bottom:20px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.card h2{font-size:20px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.card .subtitle{color:var(--muted);font-size:14px;margin-bottom:16px}
+/* ── Socrates Box ── */
+.socrates{background:linear-gradient(135deg,#FEF3C7 0%,#FDE68A 100%);border-left:4px solid var(--warn);border-radius:10px;padding:16px 20px;margin:16px 0}
+.socrates .q-label{font-size:12px;font-weight:700;color:#92400E;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.socrates .q-text{font-size:15px;color:#78350F;font-weight:500;line-height:1.7}
+.socrates .q-hint{font-size:13px;color:#92400E;margin-top:8px;font-style:italic;opacity:0.8}
+/* ── Controls ── */
+.control-group{margin:16px 0}
+.control-group label{display:block;font-size:14px;font-weight:600;margin-bottom:8px;color:var(--text)}
+.slider-row{display:flex;align-items:center;gap:12px}
+input[type=range]{flex:1;height:6px;border-radius:3px;background:var(--border);outline:none;-webkit-appearance:none;appearance:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.2)}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;border:none}
+.slider-value{min-width:70px;text-align:center;font-weight:700;font-size:16px;color:var(--accent);background:var(--accent-light);padding:4px 10px;border-radius:8px}
+input[type=number],select{padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;width:100%;outline:none}
+input[type=number]:focus,select:focus{border-color:var(--accent)}
+/* ── Result Display ── */
+.result-box{background:var(--accent-light);border-radius:10px;padding:16px;margin-top:12px}
+.result-box .result-label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.result-box .result-value{font-size:28px;font-weight:700;color:var(--accent);margin:4px 0}
+.result-box .result-desc{font-size:13px;color:var(--muted)}
+/* ── Status Badge ── */
+.badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.badge.low{background:#FEF3C7;color:#92400E}
+.badge.mid{background:#DBEAFE;color:#1E40AF}
+.badge.high{background:#FEE2E2;color:#991B1B}
+.badge.ok{background:#D1FAE5;color:#065F46}
+/* ── Chart Container ── */
+.chart-container{width:100%;height:350px;margin-top:12px}
+.chart-container.small{height:280px}
+/* ── Food Selector ── */
+.food-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin:12px 0}
+.food-item{border:2px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--card)}
+.food-item:hover{border-color:var(--accent);transform:translateY(-2px)}
+.food-item.selected{border-color:var(--accent);background:var(--accent-light)}
+.food-item .emoji{font-size:28px;display:block;margin-bottom:4px}
+.food-item .name{font-size:13px;font-weight:600}
+.food-item .gi{font-size:11px;color:var(--muted);margin-top:2px}
+/* ── Info Grid ── */
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:12px 0}
+.info-card{background:var(--bg);border-radius:10px;padding:14px;border:1px solid var(--border)}
+.info-card .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.info-card .value{font-size:22px;font-weight:700;margin:4px 0}
+.info-card .unit{font-size:13px;color:var(--muted)}
+/* ── Table ── */
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+th{background:var(--bg);font-weight:600;color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:0.5px}
+tr:hover{background:var(--bg)}
+/* ── Tabs ── */
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:16px}
+.tab{padding:10px 16px;cursor:pointer;font-size:14px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.2s}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+/* ── Footer ── */
+footer{text-align:center;padding:24px;color:var(--muted);font-size:13px;border-top:1px solid var(--border);margin-top:20px}
+/* ── Responsive ── */
+@media(max-width:768px){
+  header h1{font-size:20px}
+  .card{padding:16px}
+  .chart-container{height:280px}
+  .food-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🍎 维持生命的营养素 · 交互学习实验室</h1>
+  <p>通过滑动、输入与探索，理解七大营养素的奥秘 | 苏格拉底式提问引导深度思考</p>
+</header>
+
+<nav>
+  <ul>
+    <li><a href="#m1" class="nav-link active" data-module="m1"><span class="icon">🍞</span>碳水化合物与GI</a></li>
+    <li><a href="#m2" class="nav-link" data-module="m2"><span class="icon">🥩</span>蛋白质质量</a></li>
+    <li><a href="#m3" class="nav-link" data-module="m3"><span class="icon">🥑</span>脂质与脂肪酸</a></li>
+    <li><a href="#m4" class="nav-link" data-module="m4"><span class="icon">💧</span>水平衡</a></li>
+    <li><a href="#m5" class="nav-link" data-module="m5"><span class="icon">🍊</span>维生素C动态</a></li>
+    <li><a href="#m6" class="nav-link" data-module="m6"><span class="icon">🦴</span>钙与骨骼</a></li>
+    <li><a href="#m7" class="nav-link" data-module="m7"><span class="icon">⚡</span>能量平衡</a></li>
+    <li><a href="#m8" class="nav-link" data-module="m8"><span class="icon">🩸</span>铁与贫血</a></li>
+    <li><a href="#m9" class="nav-link" data-module="m9"><span class="icon">🌾</span>膳食纤维</a></li>
+    <li><a href="#m10" class="nav-link" data-module="m10"><span class="icon">🥗</span>膳食宝塔</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- MODULE 1: 碳水化合物与血糖生成指数(GI/GL) -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="module active" id="m1">
+  <div class="card">
+    <h2>🍞 碳水化合物与血糖生成指数（GI / GL）</h2>
+    <p class="subtitle">选择食物、调节摄入量，观察血糖波动曲线 | 理解GI与GL的区别</p>
+
+    <div class="socrates">
+      <div class="q-label">🤔 苏格拉底提问</div>
+      <div class="q-text">为什么同样含50g碳水化合物的白米饭和燕麦，餐后血糖反应却截然不同？如果GI值高的食物一定不健康，那西瓜（GI=72）是否比白米饭（GI=83）更"危险"？</div>
+      <div class="q-hint">💡 提示：思考"摄入量"与"血糖负荷(GL)"的关系——GL = GI × 碳水含量 ÷ 100</div>
+    </div>
+
+    <div class="control-group">
+      <label>📋 选择食物（点击选中）</label>
+      <div class="food-grid" id="gi-foods"></div>
+    </div>
+
+    <div class="control-group">
+      <label>🍚 摄入量: <span id="m1-amount-val" class="slider-value">100g</span></label>
+      <div class="slider-row">
+        <input type="range" id="m1-amount" min="50" max="300" value="100" step="10">
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="label">GI值</div>
+        <div class="value" id="m1-gi">—</div>
+        <div class="unit">血糖生成指数</div>
+      </div>
+      <div class="info-card">
+        <div class="label">碳水含量</div>
+        <div class="value" id="m1-carb">—</div>
+        <div class="unit">g / 100g</div>
+      </div>
+      <div class="info-card">
+        <div class="label">血糖负荷 GL</div>
+        <div class="value" id="m1-gl">—</div>
+        <div class="unit" id="m1-gl-level">—</div>
+      </div>
+    </div>
+
+    <div id="m1-chart" class="chart-container"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- MODULE 2: 蛋白质质量评价 -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="module" id="m2">
+  <div class="card">
+    <h2>🥩 蛋白质质量评价：氨基酸评分与互补</h2>
+    <p class="subtitle">调节不同食物蛋白的配比，观察必需氨基酸评分的变化</p>
+
+    <div class="socrates">
+      <div class="q-label">🤔 苏格拉底提问</div>
+      <div class="q-text">谷物缺乏赖氨酸但富含蛋氨酸，豆类恰好相反——这种"缺陷"是自然的失误，还是进化的智慧？如果一个人只吃米饭不吃豆类，他的蛋白质营养状况会如何？</div>
+      <div class="q-hint">💡 提示：思考"限制氨基酸"概念——木桶效应，最短的板决定容量</div>
+    </div>
+
+    <div class="control-group">
+      <label>🌾 谷物蛋白（米饭）比例: <span id="m2-grain-val" class="slider-value">50%</span></label>
+      <input type="range" id="m2-grain" min="0" max="100" value="50" step="5">
+    </div>
+    <div class="control-group">
+      <label>🫘 豆类蛋白（黄豆）比例: <span id="m2-bean-val" class="slider-value">50%</span></label>
+      <input type="range" id="m2-bean" min="0" max="100" value="50" step="5">
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="label">氨基酸评分 AAS</div>
+        <div class="value" id="m2-aas">—</div>
+        <div class="unit" id="m2-aas-level">—</div>
+      </div>
+      <div class="info-card">
+        <div class="label">限制氨基酸</div>
+        <div class="value" id="m2-limit" style="font-size:16px">—</div>
+        <div class="unit">第一限制氨基酸</div>
+      </div>
+      <div class="info-card">
+        <div class="label">蛋白质互补效果</div>
+        <div class="value" id="m2-complement" style="font-size:16px">—</div>
+        <div class="unit">协同 / 拮抗</div>
+      </div>
+    </div>
+
+    <div id="m2-chart" class="chart-container"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- MODULE 3: 脂质与脂肪酸平衡 -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="module" id="m3">
+  <div class="card">
+    <h2>🥑 脂质与脂肪酸平衡：SFA / MUFA / PUFA</h2>
+    <p class="subtitle">调节三类脂肪酸比例，评估心血管健康风险</p>
+
+    <div class="socrates">
+      <div class="q-label">🤔 苏格拉底提问</div>
+      <div class="q-text">地中海饮食脂肪供能比高达40%，却心血管疾病发病率最低——这"矛盾"说明了什么？如果"低脂"就是健康，为何坚果（高脂）被推荐为健康食品？</div>
+      <div class="q-hint">💡 提示：关键不在"多少"，而在"什么类型"——脂肪酸结构比总量更重要</div>
+    </div>
+
+    <div class="control-group">
+      <label>🥩 饱和脂肪酸 SFA: <span id="m3-sfa-val" class="slider-value">33%</span></label>
+      <input type="range" id="m3-sfa" min="0" max="100" value="33" step="1">
+    </div>
+    <div class="control-group">
+      <label>🥑 单不饱和 MUFA: <span id="m3-mufa-val" class="slider-value">33%</span></label>
+      <input type="range" id="m3-mufa" min="0" max="100" value="33" step="1">
+    </div>
+    <div class="control-group">
+      <label>🐟 多不饱和 PUFA: <span id="m3-pufa-val" class="slider-value">34%</span></label>
+      <input type="range" id="m3-pufa" min="0" max="100" value="34" step="1">
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="label">ω-6 : ω-3 比值</div>
+        <div class="value" id="m3-ratio">—</div>
+        <div class="unit" id="m3-ratio-level">理想: 4:1 ~ 1:1</div>
+      </div>
+      <div class="info-card">
+        <div class="label">心血管风险</div>
+        <div class="value" id="m3-risk" style="font-size:18px">—</div>
+        <div class="unit" id="m3-risk-level">—</div>
+      </div>
+    </div>
+
+    <div id="m3-chart" class="chart-container"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- MODULE 4: 水平衡 -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="module" id="m4">
+  <div class="card">
+    <h2>💧 水平衡：摄入与排出动态</h2>
+    <p class="subtitle">调节饮水量、运动量与环境温度，观察水平衡状态</p>
+
+    <div class="socrates">
+      <div class="q-label">🤔 苏格拉底提问</div>
+      <div class="q-text">人体可以数周不进食，但数日不饮水即危及生命——为什么水是"第一营养素"？运动后大量出汗时，只补充纯水是否足够？什么是"水中毒"？</div>
+      <div class="q-hint">💡 提示：思考电解质平衡——钠、钾随汗液丢失，纯水稀释血钠</div>
+    </div>
+
+    <div class="control-group">
+      <label>🥤 每日饮水量: <span id="m4-intake-val" class="slider-value">1500ml</span></label>
+      <input type="range" id="m4-intake" min="500" max="4000" value="1500" step="100">
+    </div>
+    <div class="control-group">
+      <label>🏃 运动时长: <span id="m4-exercise-val" class="slider-value">30分钟</span></label>
+      <input type="range" id="m4-exercise" min="0" max="180" value="30" step="10">
+    </div>
+    <div class="control-group">
+      <label>🌡️ 环境温度: <span id="m4-temp-val" class="slider-value">25°C</span></label>
+      <input type="range" id="m4-temp" min="10" max="40" value="25" step="1">
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="label">总摄入量</div>
+        <div class="value" id="m4-total-in">—</div>
+        <div class="unit">ml / 日</div>
+      </div>
+      <div class="info-card">
+        <div class="label">总排出量</div>
+        <div class="value" id="m4-total-out">—</div>
+        <div class="unit">ml / 日</div>
+      </div>
+      <div class="info-card">
+        <div class="label">水平衡状态</div>
+        <div class="value" id="m4-balance" style="font-size:18px">—</div>
+        <div class="unit" id="m4-balance-level">—</div>
+      </div>
+    </div>
+
+    <div id="m4-chart" class="chart-container"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- MODULE 5: 维生素C动态 -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="module" id="m5">
+  <div class="card">
+    <h2>🍊 维生素C：吸收、储存与消耗动态</h2>
+    <p class="subtitle">调节每日摄入量，观察血浆维生素C浓度变化曲线</p>
+
+    <div class="socrates">
+      <div class="q-label">🤔 苏格拉底提问</div>
+      <div class="q-text">大多数动物能自身合成维生素C，人类却不能——这是进化缺陷还是饮食适应？大剂量补充维生素C真的能"预防感冒"吗？为什么超过一定剂量后，吸收率反而下降？</div>
+      <div class="q-hint">💡 提示：思考"饱和阈值"与"肾脏排泄"——超过血浆饱和后，多余部分随尿排出</div>
+    </div>
+
+    <div class="control-group">
+      <label>🍊 每日维生素C摄入量: <span id="m5-intake-val" class="slider-value">100mg</span></label>
+      <input type="range" id="m5-intake" min="0" max="2000" value="100" step="10">
+    </div>
+    <div class="control-group">
+      <label>🚬 吸烟状况</label>
+      <select id="m5-smoke">
+        <option value="0">不吸烟</option>
+        <option value="35">吸烟（每日消耗+35mg）</option>
+      </select>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="label">推荐摄入量RNI</div>
+        <div class="value">100</div>
+        <div class="unit">mg / 日</div>
+      </div>
+      <div class="info-card">
+        <div class="label">血浆浓度</div>
+        <div class="value" id="m5-plasma">—</div>
+        <div class="unit" id="m5-plasma-level">μmol/L</div>
+      </div>
+      <div class="info-card">
+        <div class="label">吸收率</div>
+        <div class="value" id="m5-absorb">—</div>
+        <div class="unit">% (剂量依赖性)</div>
+      </div>
+    </div>
+
+    <div id="m5-chart" class="chart-container"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- MODULE 6: 钙与骨骼健康 -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="module" id="m6">
+  <div class="card">
+    <h2>🦴 钙与骨骼健康：吸收率与维生素D协同</h2>
+    <p class="subtitle">调节钙摄入量与维生素D水平，评估骨密度风险</p>
+
+    <div class="socrates">
+      <div class="q-label">🤔 苏格拉底提问</div>
+      <div class="q-text">中国人膳食钙摄入普遍不足，但大量喝牛奶就能解决吗？为什么菠菜含钙丰富却不是好的钙源？维生素D如何成为钙吸收的"钥匙"？</div>
+      <div class="q-hint">💡 提示：思考"草酸/植酸"对钙的螯合作用，以及维生素D对肠钙吸收的调控</div>
+    </div>
+
+    <div class="control-group">
+      <label>🥛 每日钙摄入量: <span id="m6-calcium-val" class="slider-value">400mg</span></label>
+      <input type="range" id="m6-calcium" min="0" max="1500" value="400" step="50">
+    </div>
+    <div class="control-group">
+      <label>☀️ 维生素D水平: <span id="m6-vitd-val" class="slider-value">20ng/ml</span></label>
+      <input type="range" id="m6-vitd" min="5" max="60" value="20" step="1">
+    </div>
+    <div class="control-group">
+      <label>🎂 年龄段</label>
+      <select id="m6-age">
+        <option value="0.35">青少年（吸收率35%）</option>
+        <option value="0.30" selected>成年人（吸收率30%）</option>
+        <option value="0.25">老年人（吸收率25%）</option>
+        <option value="0.40">孕产妇（吸收率40%）</option>
+      </select>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="label">实际吸收钙</div>
+        <div class="value" id="m6-absorbed">—</div>
+        <div class="unit">mg / 日</div>
+      </div>
+      <div class="info-card">
+        <div class="label">钙平衡</div>
+        <div class="value" id="m6-balance" style="font-size:18px">—</div>
+        <div class="unit" id="m6-balance-level">—</div>
+      </div>
+      <div class="info-card">
+        <div class="label">骨密度风险</div>
+        <div class="value" id="m6-risk" style="font-size:18px">—</div>
+        <div class="unit" id="m6-risk-level">—</div>
+      </div>
+    </div>
+
+    <div id="m6-chart" class="chart-container"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- MODULE 7: 能量平衡 -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="module" id="m7">
+  <div class="card">
+    <h2>⚡ 能量平衡：摄入与消耗的博弈</h2>
+    <p class="subtitle">调节饮食摄入与运动消耗，观察体重变化趋势</p>
+
+    <div class="socrates">
+      <div class="q-label">🤔 苏格拉底提问</div>
+      <div class="q-text">"管住嘴、迈开腿"看似简单，为何减肥如此困难？基础代谢占每日能耗的60-70%，为什么节食反而会降低基础代谢？1kg脂肪等于7700kcal，每天少吃500kcal，15天能减1kg吗？</div>
+      <div class="q-hint">💡 提示：思考"代谢适应"——能量摄入下降时，身体进入"节能模式"</div>
+    </div>
+
+    <div class="control-group">
+      <label>🍽️ 每日摄入热量: <span id="m7-intake-val" class="slider-value">2000kcal</span></label>
+      <input type="range" id="m7-intake" min="800" max="5000" value="2000" step="50">
+    </div>
+    <div class="control-group">
+      <label>⚖️ 体重: <span id="m7-weight-val" class="slider-value">60kg</span></label>
+      <input type="range" id="m7-weight" min="40" max="120" value="60" step="1">
+    </div>
+    <div class="control-group">
+      <label>🏃 活动水平</label>
+      <select id="m7-activity">
+        <option value="1.2">久坐（PAL 1.2）</option>
+        <option value="1.375" selected>轻度活动（PAL 1.375）</option>
+        <option value="1.55">中度活动（PAL 1.55）</option>
+        <option value="1.725">重度活动（PAL 1.725）</option>
+        <option value="1.9">极重活动（PAL 1.9）</option>
+      </select>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="label">基础代谢BMR</div>
+        <div class="value" id="m7-bmr">—</div>
+        <div class="unit">kcal / 日</div>
+      </div>
+      <div class="info-card">
+        <div class="label">总能耗TDEE</div>
+        <div class="value" id="m7-tdee">—</div>
+        <div class="unit">kcal / 日</div>
+      </div>
+      <div class="info-card">
+        <div class="label">能量平衡</div>
+        <div class="value" id="m7-balance" style="font-size:18px">—</div>
+        <div class="unit" id="m7-balance-level">—</div>
+      </div>
+      <div class="info-card">
+        <div class="label">30天体重变化</div>
+        <div class="value" id="m7-weight-change">—</div>
+        <div class="unit">kg / 月</div>
+      </div>
+    </div>
+
+    <div id="m7-chart" class="chart-container"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- MODULE 8: 铁与贫血 -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="module" id="m8">
+  <div class="card">
+    <h2>🩸 铁与贫血：血红素铁 vs 非血红素铁</h2>
+    <p class="subtitle">调节铁来源与促进/抑制因子，评估铁吸收率</p>
+
+    <div class="socrates">
+      <div class="q-label">🤔 苏格拉底提问</div>
+      <div class="q-text">同样是"补铁"，为何红肉的效果远优于菠菜？饭后喝浓茶会影响铁吸收——这背后的化学机理是什么？维生素C如何成为非血红素铁的"救星"？</div>
+      <div class="q-hint">💡 提示：血红素铁（Fe²⁺）不受植酸/鞣酸影响；非血红素铁（Fe³⁺）需还原为Fe²⁺才能吸收</div>
+    </div>
+
+    <div class="control-group">
+      <label>🥩 铁来源</label>
+      <select id="m8-source">
+        <option value="heme">血红素铁（红肉、动物肝脏）</option>
+        <option value="nonheme" selected>非血红素铁（植物性食物）</option>
+        <option value="mixed">混合来源</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>🍊 维生素C摄入: <span id="m8-vitc-val" class="slider-value">50mg</span></label>
+      <input type="range" id="m8-vitc" min="0" max="500" value="50" step="10">
+    </div>
+    <div class="control-group">
+      <label>🍵 鞣酸/植酸抑制因子</label>
+      <select id="m8-inhibitor">
+        <option value="0">无</option>
+        <option value="0.5" selected>轻度（饭后水果）</option>
+        <option value="0.3">中度（饭后饮茶）</option>
+        <option value="0.1">重度（浓茶+高纤维）</option>
+      </select>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="label">基础吸收率</div>
+        <div class="value" id="m8-base-rate">—</div>
+        <div class="unit">% (铁类型决定)</div>
+      </div>
+      <div class="info-card">
+        <div class="label">实际吸收率</div>
+        <div class="value" id="m8-actual-rate">—</div>
+        <div class="unit">% (经促进/抑制调整)</div>
+      </div>
+      <div class="info-card">
+        <div class="label">贫血风险</div>
+        <div class="value" id="m8-risk" style="font-size:18px">—</div>
+        <div class="unit" id="m8-risk-level">—</div>
+      </div>
+    </div>
+
+    <div id="m8-chart" class="chart-container"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- MODULE 9: 膳食纤维 -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="module" id="m9">
+  <div class="card">
+    <h2>🌾 膳食纤维：可溶性与不可溶性纤维的协同</h2>
+    <p class="subtitle">调节两类纤维比例，观察对肠道与血糖的影响</p>
+
+    <div class="socrates">
+      <div class="q-label">🤔 苏格拉底提问</div>
+      <div class="q-text">膳食纤维"零热量"，为何被称为"第七大营养素"？可溶性纤维降血糖、降胆固醇，不可溶性纤维防便秘——如果只能选一种，你选哪个？为什么"全谷物"比"精米白面"更健康？</div>
+      <div class="q-hint">💡 提示：可溶性纤维→凝胶→延缓糖/胆固醇吸收；不可溶性纤维→增加粪便体积→促进肠道蠕动</div>
+    </div>
+
+    <div class="control-group">
+      <label>🌾 每日总纤维摄入: <span id="m9-total-val" class="slider-value">15g</span></label>
+      <input type="range" id="m9-total" min="0" max="50" value="15" step="1">
+    </div>
+    <div class="control-group">
+      <label>💧 可溶性纤维比例: <span id="m9-soluble-val" class="slider-value">30%</span></label>
+      <input type="range" id="m9-soluble" min="0" max="100" value="30" step="5">
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="label">推荐摄入量</div>
+        <div class="value">25-30</div>
+        <div class="unit">g / 日</div>
+      </div>
+      <div class="info-card">
+        <div class="label">可溶性纤维</div>
+        <div class="value" id="m9-sol">—</div>
+        <div class="unit">g / 日</div>
+      </div>
+      <div class="info-card">
+        <div class="label">不可溶性纤维</div>
+        <div class="value" id="m9-insol">—</div>
+        <div class="unit">g / 日</div>
+      </div>
+      <div class="info-card">
+        <div class="label">肠道健康指数</div>
+        <div class="value" id="m9-health" style="font-size:18px">—</div>
+        <div class="unit" id="m9-health-level">—</div>
+      </div>
+    </div>
+
+    <div id="m9-chart" class="chart-container"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- MODULE 10: 膳食宝塔 -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="module" id="m10">
+  <div class="card">
+    <h2>🥗 中国居民平衡膳食宝塔</h2>
+    <p class="subtitle">调节各层食物摄入量，评估膳食结构合理性</p>
+
+    <div class="socrates">
+      <div class="q-label">🤔 苏格拉底提问</div>
+      <div class="q-text">膳食宝塔为何是"塔"形而非"圆盘"？塔尖的油盐为何最少？如果完全按照宝塔饮食，是否就能保证健康？个体差异（年龄、性别、运动量）如何影响宝塔的"个性化"？</div>
+      <div class="q-hint">💡 提示：塔形体现"量"的层级关系——谷物为基，油盐为顶；个性化需基于DRIs调整</div>
+    </div>
+
+    <div class="control-group">
+      <label>🌾 谷薯类: <span id="m10-grain-val" class="slider-value">250g</span></label>
+      <input type="range" id="m10-grain" min="0" max="500" value="250" step="10">
+    </div>
+    <div class="control-group">
+      <label>🥬 蔬菜类: <span id="m10-veg-val" class="slider-value">300g</span></label>
+      <input type="range" id="m10-veg" min="0" max="600" value="300" step="10">
+    </div>
+    <div class="control-group">
+      <label>🍎 水果类: <span id="m10-fruit-val" class="slider-value">200g</span></label>
+      <input type="range" id="m10-fruit" min="0" max="400" value="200" step="10">
+    </div>
+    <div class="control-group">
+      <label>🥩 畜禽鱼蛋: <span id="m10-meat-val" class="slider-value">120g</span></label>
+      <input type="range" id="m10-meat" min="0" max="300" value="120" step="10">
+    </div>
+    <div class="control-group">
+      <label>🥛 奶及豆类: <span id="m10-dairy-val" class="slider-value">300g</span></label>
+      <input type="range" id="m10-dairy" min="0" max="600" value="300" step="10">
+    </div>
+    <div class="control-group">
+      <label>🫒 油盐: <span id="m10-oil-val" class="slider-value">25g</span></label>
+      <input type="range" id="m10-oil" min="0" max="60" value="25" step="1">
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="label">膳食结构评分</div>
+        <div class="value" id="m10-score">—</div>
+        <div class="unit" id="m10-score-level">—</div>
+      </div>
+      <div class="info-card">
+        <div class="label">总能量估算</div>
+        <div class="value" id="m10-energy">—</div>
+        <div class="unit">kcal / 日</div>
+      </div>
+    </div>
+
+    <div id="m10-chart" class="chart-container"></div>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <p>🍎 维持生命的营养素 · 交互学习实验室 | 基于食品营养学基础知识设计</p>
+  <p>数据参考：中国居民膳食营养素参考摄入量（2023版）· 中国食物成分表</p>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+document.querySelectorAll('.nav-link').forEach(link=>{
+  link.addEventListener('click',e=>{
+    e.preventDefault();
+    const modId=link.dataset.module;
+    document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+    link.classList.add('active');
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(modId).classList.add('active');
+    // Trigger chart resize
+    setTimeout(()=>{window.dispatchEvent(new Event('resize'))},100);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// MODULE 1: GI / GL
+// ═══════════════════════════════════════════════════════════════
+const giFoods=[
+  {name:'白米饭',emoji:'🍚',gi:83,carb:26},
+  {name:'白面包',emoji:'🍞',gi:70,carb:50},
+  {name:'燕麦片',emoji:'🥣',gi:55,carb:62},
+  {name:'玉米',emoji:'🌽',gi:55,carb:22},
+  {name:'红薯',emoji:'🍠',gi:54,carb:24},
+  {name:'西瓜',emoji:'🍉',gi:72,carb:6},
+  {name:'苹果',emoji:'🍎',gi:36,carb:14},
+  {name:'香蕉',emoji:'🍌',gi:52,carb:22},
+  {name:'土豆(煮)',emoji:'🥔',gi:66,carb:17},
+  {name:'绿豆',emoji:'🫘',gi:27,carb:55},
+];
+let m1Selected=giFoods[0];
+const m1Chart=echarts.init(document.getElementById('m1-chart'));
+
+function renderM1Foods(){
+  const c=document.getElementById('gi-foods');
+  c.innerHTML=giFoods.map((f,i)=>`
+    <div class="food-item ${f===m1Selected?'selected':''}" data-idx="${i}">
+      <span class="emoji">${f.emoji}</span>
+      <div class="name">${f.name}</div>
+      <div class="gi">GI=${f.gi}</div>
+    </div>`).join('');
+  c.querySelectorAll('.food-item').forEach(el=>{
+    el.onclick=()=>{m1Selected=giFoods[el.dataset.idx];renderM1Foods();updateM1();};
+  });
+}
+
+function updateM1(){
+  const amount=+document.getElementById('m1-amount').value;
+  document.getElementById('m1-amount-val').textContent=amount+'g';
+  const f=m1Selected;
+  const carb=f.carb*amount/100;
+  const gl=(f.gi*carb/100).toFixed(1);
+  document.getElementById('m1-gi').textContent=f.gi;
+  document.getElementById('m1-carb').textContent=carb.toFixed(1);
+  document.getElementById('m1-gl').textContent=gl;
+  let glLevel,glClass;
+  if(gl<10){glLevel='低负荷 ✅';glClass='ok';}
+  else if(gl<=20){glLevel='中负荷 ⚠️';glClass='mid';}
+  else{glLevel='高负荷 ❌';glClass='high';}
+  const glEl=document.getElementById('m1-gl-level');
+  glEl.textContent=glLevel;
+  glEl.className='unit badge '+glClass;
+
+  // Generate blood sugar curve
+  const peak=f.gi/100*8.0+2.0; // peak glucose mmol/L
+  const points=[];
+  for(let t=0;t<=180;t+=10){
+    let glucose;
+    if(t<=30) glucose=5.0+(peak-5.0)*Math.sin(t/30*Math.PI/2);
+    else glucose=5.0+(peak-5.0)*Math.exp(-(t-30)/60)*Math.cos((t-30)/180*Math.PI/2);
+    points.push([t,Math.max(4.0,glucose).toFixed(2)]);
+  }
+  m1Chart.setOption({
+    title:{text:'餐后2小时血糖反应曲线',left:'center',textStyle:{fontSize:14}},
+    tooltip:{trigger:'axis',formatter:p=>`时间: ${p[0].value[0]}min<br/>血糖: ${p[0].value[1]} mmol/L`},
+    grid:{left:50,right:30,top:40,bottom:40},
+    xAxis:{type:'value',name:'时间(min)',min:0,max:180},
+    yAxis:{type:'value',name:'血糖(mmol/L)',min:3,max:12,
+      splitLine:{lineStyle:{color:'#E5E7EB'}},
+      axisLine:{lineStyle:{color:'#9CA3AF'}}
+    },
+    series:[{
+      name:'血糖',type:'line',smooth:true,
+      data:points,
+      lineStyle:{color:'#3AAFA9',width:3},
+      areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[
+        {offset:0,color:'rgba(58,175,169,0.3)'},
+        {offset:1,color:'rgba(58,175,169,0.02)'}
+      ])},
+      markLine:{data:[
+        {yAxis:7.8,lineStyle:{color:'#F59E0B',type:'dashed'},label:{formatter:'糖尿病阈值7.8'}},
+        {yAxis:5.0,lineStyle:{color:'#10B981',type:'dashed'},label:{formatter:'空腹5.0'}}
+      ]}
+    }]
+  });
+}
+document.getElementById('m1-amount').oninput=updateM1;
+renderM1Foods();
+updateM1();
+
+// ═══════════════════════════════════════════════════════════════
+// MODULE 2: Protein Quality
+// ═══════════════════════════════════════════════════════════════
+const aminoAcids=['赖氨酸','蛋氨酸','色氨酸','苏氨酸','缬氨酸','亮氨酸','异亮氨酸','苯丙氨酸'];
+// Reference pattern (FAO/WHO)
+const refPattern=[5.5,3.5,1.0,4.0,5.0,7.0,4.0,6.0];
+// Grain (rice) and bean (soy) amino acid profiles per g protein
+const grainAA=[3.5,2.5,1.0,3.5,4.5,6.5,3.0,4.0];
+const beanAA=[6.5,1.5,1.2,3.5,4.0,7.5,4.5,5.0];
+const m2Chart=echarts.init(document.getElementById('m2-chart'));
+
+function updateM2(){
+  const grain=+document.getElementById('m2-grain').value;
+  const bean=100-grain;
+  document.getElementById('m2-grain-val').textContent=grain+'%';
+  document.getElementById('m2-bean-val').textContent=bean+'%';
+  document.getElementById('m2-bean').value=bean;
+
+  // Calculate mixed amino acid profile
+  const mixedAA=aminoAcids.map((_,i)=>grain/100*grainAA[i]+bean/100*beanAA[i]);
+  // Calculate AAS for each
+  const aasValues=mixedAA.map((v,i)=>v/refPattern[i]);
+  const minAAS=Math.min(...aasValues);
+  const limitIdx=aasValues.indexOf(minAAS);
+
+  document.getElementById('m2-aas').textContent=minAAS.toFixed(2);
+  let aasLevel,aasClass;
+  if(minAAS>=1.0){aasLevel='优质蛋白 ✅';aasClass='ok';}
+  else if(minAAS>=0.7){aasLevel='良好 ⚠️';aasClass='mid';}
+  else{aasLevel='不足 ❌';aasClass='high';}
+  const aasEl=document.getElementById('m2-aas-level');
+  aasEl.textContent=aasLevel;
+  aasEl.className='unit badge '+aasClass;
+  document.getElementById('m2-limit').textContent=aminoAcids[limitIdx];
+
+  let compText;
+  if(grain>0&&bean>0&&minAAS>Math.min(...grainAA.map((v,i)=>v/refPattern[i]))){
+    compText='协同增效 ✅';
+  }else if(grain===100){compText='单一来源 ⚠️';}
+  else if(bean===100){compText='单一来源 ⚠️';}
+  else{compText='部分互补';}
+  document.getElementById('m2-complement').textContent=compText;
+
+  m2Chart.setOption({
+    title:{text:'必需氨基酸评分对比',left:'center',textStyle:{fontSize:14}},
+    tooltip:{trigger:'axis'},
+    legend:{data:['参考模式','谷物(米饭)','豆类(黄豆)','混合膳食'],bottom:0},
+    grid:{left:50,right:30,top:40,bottom:60},
+    xAxis:{type:'category',data:aminoAcids,axisLabel:{rotate:30}},
+    yAxis:{type:'value',name:'mg/g蛋白'},
+    series:[
+      {name:'参考模式',type:'bar',data:refPattern,itemStyle:{color:'#D1D5DB'}},
+      {name:'谷物(米饭)',type:'bar',data:grainAA,itemStyle:{color:'#F59E0B'}},
+      {name:'豆类(黄豆)',type:'bar',data:beanAA,itemStyle:{color:'#10B981'}},
+      {name:'混合膳食',type:'bar',data:mixedAA,itemStyle:{color:'#3AAFA9'}}
+    ]
+  });
+}
+document.getElementById('m2-grain').oninput=updateM2;
+document.getElementById('m2-bean').oninput=()=>{
+  document.getElementById('m2-grain').value=100-(+document.getElementById('m2-bean').value);
+  updateM2();
+};
+updateM2();
+
+// ═══════════════════════════════════════════════════════════════
+// MODULE 3: Lipids
+// ═══════════════════════════════════════════════════════════════
+const m3Chart=echarts.init(document.getElementById('m3-chart'));
+function updateM3(){
+  let sfa=+document.getElementById('m3-sfa').value;
+  let mufa=+document.getElementById('m3-mufa').value;
+  let pufa=+document.getElementById('m3-pufa').value;
+  const total=sfa+mufa+pufa;
+  if(total>0){sfa=sfa/total*100;mufa=mufa/total*100;pufa=pufa/total*100;}
+  document.getElementById('m3-sfa-val').textContent=sfa.toFixed(0)+'%';
+  document.getElementById('m3-mufa-val').textContent=mufa.toFixed(0)+'%';
+  document.getElementById('m3-pufa-val').textContent=pufa.toFixed(0)+'%';
+
+  // Estimate omega-6:omega-3 ratio (PUFA split ~ 15:1 typical, but varies)
+  const omega6=pufa*0.85;
+  const omega3=pufa*0.15;
+  const ratio=omega3>0?(omega6/omega3).toFixed(1):'∞';
+  document.getElementById('m3-ratio').textContent=ratio+':1';
+  let ratioLevel;
+  if(ratio<=4){ratioLevel='理想 ✅';}
+  else if(ratio<=10){ratioLevel='可接受 ⚠️';}
+  else{ratioLevel='偏高 ❌';}
+  document.getElementById('m3-ratio-level').textContent=ratioLevel;
+
+  // Cardiovascular risk
+  let risk,riskLevel;
+  if(sfa<10&&mufa>15&&pufa>10){risk='低风险 ✅';riskLevel='地中海模式';}
+  else if(sfa<15){risk='中低风险';riskLevel='均衡模式';}
+  else if(sfa<25){risk='中风险 ⚠️';riskLevel='需调整';}
+  else{risk='高风险 ❌';riskLevel='不推荐';}
+  document.getElementById('m3-risk').textContent=risk;
+  document.getElementById('m3-risk-level').textContent=riskLevel;
+
+  m3Chart.setOption({
+    title:{text:'脂肪酸构成比例',left:'center',textStyle:{fontSize:14}},
+    tooltip:{trigger:'item',formatter:'{b}: {d}%'},
+    legend:{bottom:0},
+    series:[{
+      type:'pie',radius:['40%','70%'],center:['50%','45%'],
+      data:[
+        {name:'饱和SFA',value:sfa.toFixed(1),itemStyle:{color:'#EF4444'}},
+        {name:'单不饱和MUFA',value:mufa.toFixed(1),itemStyle:{color:'#10B981'}},
+        {name:'多不饱和PUFA',value:pufa.toFixed(1),itemStyle:{color:'#3B82F6'}}
+      ],
+      label:{formatter:'{b}\n{d}%'}
+    }]
+  });
+}
+['m3-sfa','m3-mufa','m3-pufa'].forEach(id=>{
+  document.getElementById(id).oninput=updateM3;
+});
+updateM3();
+
+// ═══════════════════════════════════════════════════════════════
+// MODULE 4: Water Balance
+// ═══════════════════════════════════════════════════════════════
+const m4Chart=echarts.init(document.getElementById('m4-chart'));
+function updateM4(){
+  const intake=+document.getElementById('m4-intake').value;
+  const exercise=+document.getElementById('m4-exercise').value;
+  const temp=+document.getElementById('m4-temp').value;
+  document.getElementById('m4-intake-val').textContent=intake+'ml';
+  document.getElementById('m4-exercise-val').textContent=exercise+'分钟';
+  document.getElementById('m4-temp-val').textContent=temp+'°C';
+
+  // Intake: drinking + food water (~1000ml) + metabolic water (~300ml)
+  const foodWater=1000;
+  const metabolicWater=300;
+  const totalIn=intake+foodWater+metabolicWater;
+
+  // Output: urine + insensible (skin/lung) + feces + sweat
+  const sweatBase=exercise*15; // ml per min exercise
+  const tempExtra=Math.max(0,temp-25)*50; // extra sweat for high temp
+  const sweat=sweatBase+tempExtra;
+  const insensible=900+tempExtra*0.3; // skin + lung
+  const feces=150;
+  const urine=Math.max(500,totalIn-sweat-insensible-feces); // kidney regulates
+  const totalOut=urine+insensible+feces+sweat;
+
+  document.getElementById('m4-total-in').textContent=totalIn;
+  document.getElementById('m4-total-out').textContent=totalOut;
+
+  const balance=totalIn-totalOut;
+  let balText,balLevel;
+  if(balance>500){balText='正平衡 ⚠️';balLevel='可能水中毒风险';}
+  else if(balance>-200&&balance<=500){balText='平衡 ✅';balLevel='健康状态';}
+  else if(balance>-500){balText='负平衡 ⚠️';balLevel='轻度脱水';}
+  else{balText='严重负平衡 ❌';balLevel='脱水风险';}
+  document.getElementById('m4-balance').textContent=balText;
+  document.getElementById('m4-balance-level').textContent=balLevel;
+
+  m4Chart.setOption({
+    title:{text:'每日水分摄入与排出',left:'center',textStyle:{fontSize:14}},
+    tooltip:{trigger:'axis'},
+    legend:{bottom:0},
+    grid:{left:60,right:30,top:40,bottom:60},
+    xAxis:{type:'category',data:['饮水','食物水','代谢水','尿液','不显汗','粪便','运动出汗','高温出汗']},
+    yAxis:{type:'value',name:'ml'},
+    series:[
+      {name:'摄入',type:'bar',data:[intake,foodWater,metabolicWater,0,0,0,0,0],
+        itemStyle:{color:'#3B82F6'},
+        stack:'in'},
+      {name:'排出',type:'bar',data:[0,0,0,urine,insensitive=900,150,sweatBase,tempExtra],
+        itemStyle:{color:'#EF4444'},
+        stack:'out'}
+    ]
+  });
+}
+['m4-intake','m4-exercise','m4-temp'].forEach(id=>{
+  document.getElementById(id).oninput=updateM4;
+});
+updateM4();
+
+// ═══════════════════════════════════════════════════════════════
+// MODULE 5: Vitamin C
+// ═══════════════════════════════════════════════════════════════
+const m5Chart=echarts.init(document.getElementById('m5-chart'));
+function updateM5(){
+  const intake=+document.getElementById('m5-intake').value;
+  const smoke=+document.getElementById('m5-smoke').value;
+  document.getElementById('m5-intake-val').textContent=intake+'mg';
+
+  const effectiveIntake=Math.max(0,intake-smoke);
+  // Absorption rate: dose-dependent (decreasing at high doses)
+  let absorbRate;
+  if(effectiveIntake<100) absorbRate=0.85;
+  else if(effectiveIntake<500) absorbRate=0.70;
+  else if(effectiveIntake<1000) absorbRate=0.50;
+  else absorbRate=0.30;
+
+  // Plasma concentration (simplified model)
+  let plasma;
+  if(effectiveIntake<30) plasma=5+effectiveIntake*0.3;
+  else if(effectiveIntake<100) plasma=14+(effectiveIntake-30)*0.4;
+  else if(effectiveIntake<500) plasma=42+(effectiveIntake-100)*0.05;
+  else plasma=62+(effectiveIntake-500)*0.01;
+  plasma=Math.min(85,plasma);
+
+  document.getElementById('m5-plasma').textContent=plasma.toFixed(1);
+  let plasmaLevel;
+  if(plasma<11){plasmaLevel='缺乏 ❌ (坏血病风险)';}
+  else if(plasma<28){plasmaLevel='不足 ⚠️';}
+  else if(plasma<60){plasmaLevel='正常 ✅';}
+  else{plasmaLevel='饱和 ✅';}
+  document.getElementById('m5-plasma-level').textContent=plasmaLevel;
+
+  document.getElementById('m5-absorb').textContent=(absorbRate*100).toFixed(0);
+
+  // Generate 24h plasma curve
+  const points=[];
+  for(let h=0;h<=24;h+=1){
+    const peak=Math.sin(h/24*Math.PI*2-0.3)*0.15+1;
+    const val=plasma*peak*(0.9+0.1*Math.exp(-h/12));
+    points.push([h,Math.max(5,val).toFixed(1)]);
+  }
+
+  m5Chart.setOption({
+    title:{text:'24小时血浆维生素C浓度变化',left:'center',textStyle:{fontSize:14}},
+    tooltip:{trigger:'axis',formatter:p=>`时间: ${p[0].value[0]}h<br/>血浆VC: ${p[0].value[1]} μmol/L`},
+    grid:{left:60,right:30,top:40,bottom:40},
+    xAxis:{type:'value',name:'时间(h)',min:0,max:24},
+    yAxis:{type:'value',name:'血浆VC(μmol/L)',min:0,max:90},
+    series:[{
+      type:'line',smooth:true,data:points,
+      lineStyle:{color:'#F59E0B',width:3},
+      areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[
+        {offset:0,color:'rgba(245,158,11,0.3)'},
+        {offset:1,color:'rgba(245,158,11,0.02)'}
+      ])},
+      markLine:{data:[
+        {yAxis:11,lineStyle:{color:'#EF4444',type:'dashed'},label:{formatter:'缺乏线11'}},
+        {yAxis:28,lineStyle:{color:'#F59E0B',type:'dashed'},label:{formatter:'正常线28'}},
+        {yAxis:60,lineStyle:{color:'#10B981',type:'dashed'},label:{formatter:'饱和线60'}}
+      ]}
+    }]
+  });
+}
+document.getElementById('m5-intake').oninput=updateM5;
+document.getElementById('m5-smoke').onchange=updateM5;
+updateM5();
+
+// ═══════════════════════════════════════════════════════════════
+// MODULE 6: Calcium
+// ═══════════════════════════════════════════════════════════════
+const m6Chart=echarts.init(document.getElementById('m6-chart'));
+function updateM6(){
+  const calcium=+document.getElementById('m6-calcium').value;
+  const vitD=+document.getElementById('m6-vitd').value;
+  const baseRate=+document.getElementById('m6-age').value;
+  document.getElementById('m6-calcium-val').textContent=calcium+'mg';
+  document.getElementById('m6-vitd-val').textContent=vitD+'ng/ml';
+
+  // Vitamin D effect on absorption
+  let vitDEffect;
+  if(vitD<12) vitDEffect=0.6;
+  else if(vitD<20) vitDEffect=0.8;
+  else if(vitD<30) vitDEffect=1.0;
+  else vitDEffect=1.1;
+
+  const actualRate=baseRate*vitDEffect;
+  const absorbed=calcium*actualRate;
+  const excretion=150; // urinary + fecal endogenous
+  const balance=absorbed-excretion;
+
+  document.getElementById('m6-absorbed').textContent=absorbed.toFixed(0);
+  let balText,balLevel;
+  if(balance>100){balText='正平衡 ✅';balLevel='骨量积累';}
+  else if(balance>-50){balText='平衡 ✅';balLevel='维持';}
+  else{balText='负平衡 ❌';balLevel='骨量流失';}
+  document.getElementById('m6-balance').textContent=balText;
+  document.getElementById('m6-balance-level').textContent=balLevel;
+
+  let risk,riskLevel;
+  if(balance>100){risk='低风险 ✅';riskLevel='骨骼健康';}
+  else if(balance>-50){risk='中风险 ⚠️';riskLevel='需关注';}
+  else{risk='高风险 ❌';riskLevel='骨质疏松';}
+  document.getElementById('m6-risk').textContent=risk;
+  document.getElementById('m6-risk-level').textContent=riskLevel;
+
+  m6Chart.setOption({
+    title:{text:'钙代谢平衡图',left:'center',textStyle:{fontSize:14}},
+    tooltip:{trigger:'axis'},
+    legend:{bottom:0},
+    grid:{left:60,right:30,top:40,bottom:60},
+    xAxis:{type:'category',data:['摄入钙','吸收钙','尿钙排出','骨钙沉积/流失']},
+    yAxis:{type:'value',name:'mg/日'},
+    series:[
+      {name:'量',type:'bar',data:[
+        {value:calcium,itemStyle:{color:'#3B82F6'}},
+        {value:absorbed,itemStyle:{color:'#10B981'}},
+        {value:excretion,itemStyle:{color:'#F59E0B'}},
+        {value:balance,itemStyle:{color:balance>0?'#10B981':'#EF4444'}}
+      ],label:{show:true,position:'top'}}
+    ]
+  });
+}
+['m6-calcium','m6-vitd'].forEach(id=>document.getElementById(id).oninput=updateM6);
+document.getElementById('m6-age').onchange=updateM6;
+updateM6();
+
+// ═══════════════════════════════════════════════════════════════
+// MODULE 7: Energy Balance
+// ═══════════════════════════════════════════════════════════════
+const m7Chart=echarts.init(document.getElementById('m7-chart'));
+function updateM7(){
+  const intake=+document.getElementById('m7-intake').value;
+  const weight=+document.getElementById('m7-weight').value;
+  const pal=+document.getElementById('m7-activity').value;
+  document.getElementById('m7-intake-val').textContent=intake+'kcal';
+  document.getElementById('m7-weight-val').textContent=weight+'kg';
+
+  // Mifflin-St Jeor BMR (assume male, height 170, age 25)
+  const bmr=10*weight+6.25*170-5*25+5;
+  const tdee=bmr*pal;
+  const balance=intake-tdee;
+  const weightChange=balance*30/7700; // 30 days, 7700kcal=1kg fat
+
+  document.getElementById('m7-bmr').textContent=bmr.toFixed(0);
+  document.getElementById('m7-tdee').textContent=tdee.toFixed(0);
+
+  let balText,balLevel;
+  if(balance>200){balText='正平衡 ⚠️';balLevel='增重趋势';}
+  else if(balance>-200){balText='平衡 ✅';balLevel='体重稳定';}
+  else{balText='负平衡 ⚠️';balLevel='减重趋势';}
+  document.getElementById('m7-balance').textContent=balText;
+  document.getElementById('m7-balance-level').textContent=balLevel;
+  document.getElementById('m7-weight-change').textContent=(weightChange>0?'+':'')+weightChange.toFixed(2);
+
+  // 30-day weight projection
+  const points=[];
+  let w=weight;
+  for(let d=0;d<=30;d++){
+    points.push([d,w.toFixed(2)]);
+    const dailyChange=balance/7700;
+    // Metabolic adaptation: BMR drops if in deficit
+    const adaptation=balance<-300?0.02:0;
+    w+=dailyChange-adaptation;
+  }
+
+  m7Chart.setOption({
+    title:{text:'30天体重变化预测',left:'center',textStyle:{fontSize:14}},
+    tooltip:{trigger:'axis',formatter:p=>`第${p[0].value[0]}天<br/>体重: ${p[0].value[1]} kg`},
+    grid:{left:60,right:30,top:40,bottom:40},
+    xAxis:{type:'value',name:'天数',min:0,max:30},
+    yAxis:{type:'value',name:'体重(kg)',min:Math.min(weight-3,w-1),max:Math.max(weight+3,w+1)},
+    series:[{
+      type:'line',smooth:true,data:points,
+      lineStyle:{color:'#8B5CF6',width:3},
+      areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[
+        {offset:0,color:'rgba(139,92,246,0.3)'},
+        {offset:1,color:'rgba(139,92,246,0.02)'}
+      ])},
+      markLine:{data:[{yAxis:weight,lineStyle:{color:'#9CA3AF',type:'dashed'},label:{formatter:'初始体重'}}]}
+    }]
+  });
+}
+['m7-intake','m7-weight'].forEach(id=>document.getElementById(id).oninput=updateM7);
+document.getElementById('m7-activity').onchange=updateM7;
+updateM7();
+
+// ═══════════════════════════════════════════════════════════════
+// MODULE 8: Iron
+// ═══════════════════════════════════════════════════════════════
+const m8Chart=echarts.init(document.getElementById('m8-chart'));
+function updateM8(){
+  const source=document.getElementById('m8-source').value;
+  const vitC=+document.getElementById('m8-vitc').value;
+  const inhibitor=+document.getElementById('m8-inhibitor').value;
+  document.getElementById('m8-vitc-val').textContent=vitC+'mg';
+
+  let baseRate;
+  if(source==='heme') baseRate=0.25;
+  else if(source==='nonheme') baseRate=0.05;
+  else baseRate=0.15;
+
+  document.getElementById('m8-base-rate').textContent=(baseRate*100).toFixed(0);
+
+  // Vitamin C enhances non-heme iron absorption
+  let vitCEffect=1.0;
+  if(source!=='heme'){
+    vitCEffect=1.0+Math.min(3,vitC/50);
+  }
+
+  const actualRate=baseRate*vitCEffect*inhibitor;
+  document.getElementById('m8-actual-rate').textContent=(actualRate*100).toFixed(1);
+
+  let risk,riskLevel;
+  if(actualRate>=0.20){risk='低风险 ✅';riskLevel='铁充足';}
+  else if(actualRate>=0.10){risk='中风险 ⚠️';riskLevel='需关注';}
+  else{risk='高风险 ❌';riskLevel='贫血风险';}
+  document.getElementById('m8-risk').textContent=risk;
+  document.getElementById('m8-risk-level').textContent=riskLevel;
+
+  m8Chart.setOption({
+    title:{text:'铁吸收率影响因素',left:'center',textStyle:{fontSize:14}},
+    tooltip:{trigger:'axis'},
+    legend:{bottom:0},
+    grid:{left:60,right:30,top:40,bottom:60},
+    xAxis:{type:'category',data:['基础吸收率','维生素C促进','抑制因子','最终吸收率']},
+    yAxis:{type:'value',name:'吸收率(%)',max:40},
+    series:[{
+      type:'bar',data:[
+        {value:(baseRate*100).toFixed(1),itemStyle:{color:'#3B82F6'}},
+        {value:((vitCEffect-1)*100).toFixed(1),itemStyle:{color:'#10B981'}},
+        {value:((1-inhibitor)*100).toFixed(1),itemStyle:{color:'#EF4444'}},
+        {value:(actualRate*100).toFixed(1),itemStyle:{color:'#8B5CF6'}}
+      ],label:{show:true,position:'top',formatter:'{c}%'}
+    }]
+  });
+}
+document.getElementById('m8-source').onchange=updateM8;
+document.getElementById('m8-vitc').oninput=updateM8;
+document.getElementById('m8-inhibitor').onchange=updateM8;
+updateM8();
+
+// ═══════════════════════════════════════════════════════════════
+// MODULE 9: Dietary Fiber
+// ═══════════════════════════════════════════════════════════════
+const m9Chart=echarts.init(document.getElementById('m9-chart'));
+function updateM9(){
+  const total=+document.getElementById('m9-total').value;
+  const solPct=+document.getElementById('m9-soluble').value;
+  document.getElementById('m9-total-val').textContent=total+'g';
+  document.getElementById('m9-soluble-val').textContent=solPct+'%';
+
+  const sol=total*solPct/100;
+  const insol=total*(100-solPct)/100;
+  document.getElementById('m9-sol').textContent=sol.toFixed(1);
+  document.getElementById('m9-insol').textContent=insol.toFixed(1);
+
+  // Health index: based on total + balance
+  let healthScore=0;
+  if(total>=25) healthScore+=40;
+  else if(total>=15) healthScore+=25;
+  else healthScore+=10;
+  if(solPct>=25&&solPct<=40) healthScore+=30;
+  else if(solPct>=20&&solPct<=50) healthScore+=20;
+  else healthScore+=10;
+  if(total>=25&&solPct>=25&&solPct<=40) healthScore+=30;
+  else if(total>=15) healthScore+=20;
+  else healthScore+=10;
+
+  let healthText,healthLevel;
+  if(healthScore>=80){healthText='优秀 ✅';healthLevel='肠道健康';}
+  else if(healthScore>=60){healthText='良好 ⚠️';healthLevel='基本达标';}
+  else if(healthScore>=40){healthText='一般 ⚠️';healthLevel='需改善';}
+  else{healthText='不足 ❌';healthLevel='风险较高';}
+  document.getElementById('m9-health').textContent=healthText;
+  document.getElementById('m9-health-level').textContent=healthLevel;
+
+  m9Chart.setOption({
+    title:{text:'膳食纤维构成与健康效应',left:'center',textStyle:{fontSize:14}},
+    tooltip:{trigger:'item'},
+    legend:{bottom:0},
+    series:[{
+      type:'pie',radius:['35%','65%'],center:['30%','45%'],
+      data:[
+        {name:'可溶性纤维',value:sol.toFixed(1),itemStyle:{color:'#3B82F6'}},
+        {name:'不可溶性纤维',value:insol.toFixed(1),itemStyle:{color:'#10B981'}}
+      ],
+      label:{formatter:'{b}\n{c}g'}
+    },{
+      type:'gauge',center:['70%','50%'],radius:'60%',
+      min:0,max:100,
+      data:[{value:healthScore,name:'健康指数'}],
+      axisLine:{lineStyle:{width:15,color:[[0.3,'#EF4444'],[0.6,'#F59E0B'],[0.8,'#3B82F6'],[1,'#10B981']]}},
+      detail:{formatter:'{value}',fontSize:20},
+      title:{offsetCenter:[0,'40%'],fontSize:12}
+    }]
+  });
+}
+['m9-total','m9-soluble'].forEach(id=>document.getElementById(id).oninput=updateM9);
+updateM9();
+
+// ═══════════════════════════════════════════════════════════════
+// MODULE 10: Dietary Pagoda
+// ═══════════════════════════════════════════════════════════════
+const m10Chart=echarts.init(document.getElementById('m10-chart'));
+const pagodaRef={grain:250,veg:400,fruit:300,meat:150,dairy:300,oil:25};
+function updateM10(){
+  const grain=+document.getElementById('m10-grain').value;
+  const veg=+document.getElementById('m10-veg').value;
+  const fruit=+document.getElementById('m10-fruit').value;
+  const meat=+document.getElementById('m10-meat').value;
+  const dairy=+document.getElementById('m10-dairy').value;
+  const oil=+document.getElementById('m10-oil').value;
+  document.getElementById('m10-grain-val').textContent=grain+'g';
+  document.getElementById('m10-veg-val').textContent=veg+'g';
+  document.getElementById('m10-fruit-val').textContent=fruit+'g';
+  document.getElementById('m10-meat-val').textContent=meat+'g';
+  document.getElementById('m10-dairy-val').textContent=dairy+'g';
+  document.getElementById('m10-oil-val').textContent=oil+'g';
+
+  // Score: closeness to reference
+  const items=[['谷薯',grain,pagodaRef.grain],['蔬菜',veg,pagodaRef.veg],
+    ['水果',fruit,pagodaRef.fruit],['肉蛋',meat,pagodaRef.meat],
+    ['奶豆',dairy,pagodaRef.dairy],['油盐',oil,pagodaRef.oil]];
+  let score=0;
+  items.forEach(([n,v,r])=>{
+    const ratio=v/r;
+    if(ratio>=0.8&&ratio<=1.2) score+=17;
+    else if(ratio>=0.6&&ratio<=1.5) score+=12;
+    else if(ratio>=0.4) score+=6;
+  });
+  score=Math.min(100,score);
+  let scoreLevel;
+  if(score>=85){scoreLevel='优秀 ✅';}
+  else if(score>=70){scoreLevel='良好 ⚠️';}
+  else if(score>=50){scoreLevel='一般 ⚠️';}
+  else{scoreLevel='较差 ❌';}
+  document.getElementById('m10-score').textContent=score;
+  document.getElementById('m10-score-level').textContent=scoreLevel;
+
+  // Energy estimation
+  const energy=grain*3.4+veg*0.2+fruit*0.5+meat*2.0+dairy*0.7+oil*9;
+  document.getElementById('m10-energy').textContent=energy.toFixed(0);
+
+  m10Chart.setOption({
+    title:{text:'膳食宝塔对比（实际 vs 推荐）',left:'center',textStyle:{fontSize:14}},
+    tooltip:{trigger:'axis'},
+    legend:{bottom:0},
+    grid:{left:60,right:30,top:40,bottom:60},
+    xAxis:{type:'category',data:['谷薯类','蔬菜类','水果类','肉蛋类','奶豆类','油盐']},
+    yAxis:{type:'value',name:'摄入量(g)'},
+    series:[
+      {name:'实际摄入',type:'bar',data:[grain,veg,fruit,meat,dairy,oil],
+        itemStyle:{color:'#3AAFA9'},
+        label:{show:true,position:'top'}},
+      {name:'推荐量',type:'bar',data:[pagodaRef.grain,pagodaRef.veg,pagodaRef.fruit,pagodaRef.meat,pagodaRef.dairy,pagodaRef.oil],
+        itemStyle:{color:'#D1D5DB'},
+        label:{show:true,position:'top'}}
+    ]
+  });
+}
+['m10-grain','m10-veg','m10-fruit','m10-meat','m10-dairy','m10-oil'].forEach(id=>{
+  document.getElementById(id).oninput=updateM10;
+});
+updateM10();
+
+// Resize charts on window resize
+window.addEventListener('resize',()=>{
+  [m1Chart,m2Chart,m3Chart,m4Chart,m5Chart,m6Chart,m7Chart,m8Chart,m9Chart,m10Chart].forEach(c=>c&&c.resize());
+});
+</script>
+</body>
+</html>
